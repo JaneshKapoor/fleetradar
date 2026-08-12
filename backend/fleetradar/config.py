@@ -33,9 +33,9 @@ SNAPSHOT_PATH = REPO_ROOT / "frontend" / "public" / "radar.json"
 
 # --- Credentials -----------------------------------------------------------
 
+# Collector IDs are not env config - they are per-source and live in
+# config/watchlist.json. See the note in .env.example.
 BRIGHTDATA_API_KEY = os.environ.get("BRIGHTDATA_API_KEY")
-COLLECTOR_A_ID = os.environ.get("BRIGHTDATA_COLLECTOR_A_ID")
-COLLECTOR_B_ID = os.environ.get("BRIGHTDATA_COLLECTOR_B_ID")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 
 

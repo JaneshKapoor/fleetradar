@@ -1,18 +1,27 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "_about": [
     "The single source of truth for what Fleet Radar watches.",
     "Read by: the Bright Data collectors (which URLs to scrape), the classifier",
     "(which packages to reason about), and the correlation engine (how to match a",
     "radar package back to the package names the agent actually reports).",
     "",
-    "Source pages are deliberately heterogeneous - official docs, vendor download",
-    "pages, GitHub releases, and endoflife.date - so the scrapers must handle",
-    "genuinely different page structures. That diversity is what makes the",
-    "self-healing demo meaningful rather than staged against one template.",
+    "SOURCE PAGES ARE CONTENT PAGES, NOT INDEX PAGES. Schema v1 pointed at pages",
+    "like docs.djangoproject.com/en/stable/releases/ - which is a list of links,",
+    "not release notes. Those pages carry versions and dates but no changelog",
+    "prose, and changelog prose is the entire input to Type 1 detection. Every URL",
+    "below was fetched and confirmed to contain real breaking-change text.",
     "",
-    "STATUS: URLs below are provisional targets. Each one is verified when we",
-    "point a collector at it in Stage 2 (changelog) and Stage 3 (EOL)."
+    "CHANGELOG SOURCES ARE TEMPLATED PER RELEASE LINE. Release notes live at one",
+    "page per version, so a changelog source is a url_template plus the versions",
+    "to expand it over. All pages from one template share a structure, which is",
+    "exactly what `bdata scraper run <id> --urls a,b,c` batches over: one scraper",
+    "per template, run against every version of that template.",
+    "",
+    "STRUCTURES ARE DELIBERATELY DIFFERENT across the five packages - Sphinx docs,",
+    "a vendor blog post, a vendor release-notes page, and a GitHub releases feed.",
+    "A scraper tuned to one cannot read another, so each template gets its own",
+    "collector, and self-healing is demonstrated per structure rather than once."
   ],
 
   "packages": [
@@ -33,12 +42,16 @@
 
       "sources": {
         "changelog": {
-          "url": "https://www.python.org/downloads/",
-          "notes": "Release listing with version + release date per row."
+          "collector_id": null,
+          "url_template": "https://docs.python.org/3/whatsnew/{version}.html",
+          "versions": ["3.11", "3.12", "3.13"],
+          "structure": "Sphinx docs. Breaking changes live under 'Deprecated', 'Removed' and 'Porting to Python 3.x' sections.",
+          "_volume_note": "Largest source in the watchlist at ~115k chars per page. Bound extraction to the relevant sections rather than whole-page text."
         },
         "eol": {
+          "collector_id": null,
           "url": "https://devguide.python.org/versions/",
-          "notes": "Official status table: branch, status, first release, end of support."
+          "structure": "Official status table: branch, status, first release, end of support."
         }
       }
     },
@@ -47,7 +60,7 @@
       "id": "django",
       "display_name": "Django",
       "ecosystem": "python",
-      "_why": "Best breaking-change signal in the watchlist - release notes have an explicit backwards-incompatible section.",
+      "_why": "Best breaking-change signal in the watchlist - release notes carry an explicit, consistently titled backwards-incompatible section.",
 
       "match": {
         "apt": ["python3-django"],
@@ -59,12 +72,15 @@
 
       "sources": {
         "changelog": {
-          "url": "https://docs.djangoproject.com/en/stable/releases/",
-          "notes": "Release notes index; per-release pages carry the backwards-incompatible changes."
+          "collector_id": null,
+          "url_template": "https://docs.djangoproject.com/en/stable/releases/{version}/",
+          "versions": ["4.2", "5.1", "5.2"],
+          "structure": "Sphinx docs with a dedicated 'Backwards incompatible changes in X.Y' section - the cleanest Type 1 signal we have."
         },
         "eol": {
+          "collector_id": null,
           "url": "https://www.djangoproject.com/download/",
-          "notes": "Supported-versions table plus an unsupported-versions list with end-of-life dates."
+          "structure": "Supported-versions table plus an unsupported-versions list with end-of-life dates."
         }
       }
     },
@@ -86,12 +102,15 @@
 
       "sources": {
         "changelog": {
-          "url": "https://nodejs.org/en/blog/release",
-          "notes": "Blog-style release feed - structurally unlike the table-driven sources."
+          "collector_id": null,
+          "url_template": "https://nodejs.org/en/blog/release/v{version}.0.0",
+          "versions": ["18", "20", "22"],
+          "structure": "Vendor blog post. Breaking changes are the 'Semver-Major Commits' list - a prose feed, structurally unlike the docs pages."
         },
         "eol": {
+          "collector_id": null,
           "url": "https://nodejs.org/en/about/previous-releases",
-          "notes": "Official release schedule table with end-of-life dates per major line."
+          "structure": "Official release schedule table with end-of-life dates per major line."
         }
       }
     },
@@ -112,12 +131,15 @@
 
       "sources": {
         "changelog": {
-          "url": "https://openssl-library.org/news/changelog/",
-          "notes": "Dense plain-text changelog - the hardest extraction target in the set."
+          "collector_id": null,
+          "url_template": "https://openssl-library.org/news/openssl-{version}-notes/",
+          "versions": ["3.0", "3.4", "3.5"],
+          "structure": "Vendor release-notes page. Smallest source (~9k chars) and the least consistently formatted."
         },
         "eol": {
+          "collector_id": null,
           "url": "https://endoflife.date/openssl",
-          "notes": "Third-party aggregator; used where no single official EOL table exists."
+          "structure": "Third-party aggregator; used because OpenSSL publishes no single official EOL table."
         }
       }
     },
@@ -138,8 +160,10 @@
 
       "sources": {
         "changelog": {
+          "collector_id": null,
           "url": "https://github.com/expressjs/express/releases",
-          "notes": "GitHub releases page - a fourth distinct page structure."
+          "structure": "GitHub releases feed - all releases on one server-rendered page, so no template. Note GitHub *blob* pages lazy-load via JS and are unusable without JS rendering; *releases* pages render server-side.",
+          "_no_template_note": "The only changelog source that is a single page rather than one page per version."
         },
         "eol": null
       }

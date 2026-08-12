@@ -93,6 +93,55 @@ The `match` field is doing real work: `dpkg` reports `libssl3` and
 mapping the join degenerates into fuzzy string matching, which is exactly the
 kind of thing that silently misses the one exposed host that mattered.
 
+### Why "Collector A" is five scrapers, not one
+
+`bdata scraper create` builds a scraper from **one** example URL, and
+`bdata scraper run <id> --urls a,b,c` then runs it over many. The natural unit is
+therefore *one scraper per page structure*, batched over every URL sharing that
+structure — not one scraper per signal type.
+
+Our five changelog sources are structurally unrelated: Sphinx documentation
+(Python, Django), a vendor blog post (Node), a vendor release-notes page
+(OpenSSL), and a GitHub releases feed (Express). A scraper generated against
+Django's docs cannot read Node's blog. So "Collector A" is a *family* of five
+scrapers sharing one output contract (`ChangelogEntry`), and "Collector B" is a
+family of four sharing `EolEntry`.
+
+This is better for the submission, not just more correct: self-healing gets
+demonstrated per structure, and each scraper is small enough to explain.
+
+Consequence: collector IDs are per-source, so they live in
+`config/watchlist.json` rather than as two env vars.
+
+### Why changelog sources are templated per release line
+
+Release notes are published one page per version
+(`.../releases/5.2/`, `.../releases/5.1/`). A changelog source is therefore a
+`url_template` plus the `versions` to expand it over, and that expansion is
+exactly the URL list handed to `--urls`. EOL sources need no template — support
+calendars are published as a single table covering every version.
+
+Express is the one exception: all its releases render on a single GitHub page, so
+it declares a plain `url`. The loader has to handle both.
+
+### Why content pages, not index pages
+
+Schema v1 of the watchlist pointed at pages like
+`docs.djangoproject.com/en/stable/releases/`. That page is a **list of links** —
+it has versions and dates but no release-note prose. Since changelog prose is the
+entire input to Type 1 detection, a scraper built against it would have populated
+`version` and `release_date` correctly, returned an empty `changelog_text`, and
+produced a classifier that confidently found zero breaking changes.
+
+Every URL in the watchlist was fetched and confirmed to contain real
+breaking-change text before being committed. Two lessons worth keeping:
+
+- **A scraper that returns well-formed rows is not a working scraper.** Validate
+  the *content* of the field the pipeline actually consumes.
+- **GitHub blob pages lazy-load file content via JS** and return ~3k chars of
+  shell to a plain fetch, while GitHub *releases* pages render server-side. That
+  ruled out `CHANGELOG_V22.md` and `CHANGES.md` as targets.
+
 ### Why version granularity is per-package
 
 Support windows are published per release *line*, not per patch. A host on Python
@@ -130,12 +179,19 @@ video.
 
 Tracked here as they come up, resolved as stages land.
 
-- **Collector A output volume.** Full changelog text for five packages across all
-  their releases could be large. May need to bound extraction to the last N
-  releases. *Resolve in Stage 2.*
+- **Collector A output volume.** Confirmed real: Python's "What's New" pages run
+  ~115k characters each, against ~9k for OpenSSL. Whole-page text would be
+  wasteful to store and expensive to classify. Mitigation is to bound extraction
+  to the breaking-change sections, and the watchlist currently tracks three
+  release lines per package rather than every release. *Resolve in Stage 2 by
+  scoping the extraction prompt.*
 - **Express EOL.** No formal end-of-support calendar exists, so `express` carries
   a changelog signal only. The pipeline must tolerate a `null` EOL source rather
   than assume every package has one. *Resolve in Stage 3.*
+- **Which versions to track.** The watchlist pins three release lines per
+  package. For breaking-change detection to be useful, the tracked set has to
+  cover the releases *newer than* what the fleet actually runs, so this may need
+  widening once the demo fleet's inventory is fixed. *Resolve in Stage 6.*
 - **Kernel version.** The agent collects `uname -r`, but the kernel is not yet on
   the watchlist and has a different support model than userspace packages.
   *Resolve in Stage 6 or defer.*
