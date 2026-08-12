@@ -1,0 +1,24 @@
+# Fleet Radar backend dependencies.
+# Install into a repo-root venv:  python3 -m venv .venv && source .venv/bin/activate
+#                                 pip install -r backend/requirements.txt
+
+# --- API (agent ingest endpoint) -------------------------------------------
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# --- Data contracts --------------------------------------------------------
+# Shared by the API, the collectors and the classifiers (see models.py).
+pydantic==2.10.5
+
+# --- Config ----------------------------------------------------------------
+python-dotenv==1.0.1
+
+# --- Bright Data -----------------------------------------------------------
+# Triggers the Scraper Studio collectors programmatically for recurring runs.
+brightdata-sdk==2.5.0
+
+# --- Classification --------------------------------------------------------
+# Type 1 (breaking change) only. Type 2 (EOL) is plain date arithmetic.
+anthropic==0.121.0
+
+# Storage is stdlib sqlite3 - no dependency needed.

@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fleetradar-agent"
+version = "0.1.0"
+description = "Reads installed packages off a Linux host and reports them to Fleet Radar."
+readme = "README.md"
+requires-python = ">=3.8"
+
+# No dependencies, on purpose. The agent installs on arbitrary fleet hosts with
+# whatever system Python they have; every added dependency is a host that fails
+# to install it. See the design note in fleetradar_agent/collect.py.
+dependencies = []
+
+[project.scripts]
+fleetradar-agent = "fleetradar_agent.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["fleetradar_agent*"]

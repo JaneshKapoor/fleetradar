@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "_about": [
+    "The single source of truth for what Fleet Radar watches.",
+    "Read by: the Bright Data collectors (which URLs to scrape), the classifier",
+    "(which packages to reason about), and the correlation engine (how to match a",
+    "radar package back to the package names the agent actually reports).",
+    "",
+    "Source pages are deliberately heterogeneous - official docs, vendor download",
+    "pages, GitHub releases, and endoflife.date - so the scrapers must handle",
+    "genuinely different page structures. That diversity is what makes the",
+    "self-healing demo meaningful rather than staged against one template.",
+    "",
+    "STATUS: URLs below are provisional targets. Each one is verified when we",
+    "point a collector at it in Stage 2 (changelog) and Stage 3 (EOL)."
+  ],
+
+  "packages": [
+    {
+      "id": "python",
+      "display_name": "Python",
+      "ecosystem": "python",
+      "_why": "Ships on every Linux host and has a strict, well-published support window.",
+
+      "match": {
+        "apt": ["python3", "python3-minimal"],
+        "rpm": ["python3"],
+        "pypi": []
+      },
+
+      "version_granularity": "minor",
+      "_version_granularity_note": "Support and EOL are tracked per 3.x line, so 3.7.0 and 3.7.9 share a verdict.",
+
+      "sources": {
+        "changelog": {
+          "url": "https://www.python.org/downloads/",
+          "notes": "Release listing with version + release date per row."
+        },
+        "eol": {
+          "url": "https://devguide.python.org/versions/",
+          "notes": "Official status table: branch, status, first release, end of support."
+        }
+      }
+    },
+
+    {
+      "id": "django",
+      "display_name": "Django",
+      "ecosystem": "python",
+      "_why": "Best breaking-change signal in the watchlist - release notes have an explicit backwards-incompatible section.",
+
+      "match": {
+        "apt": ["python3-django"],
+        "rpm": ["python3-django"],
+        "pypi": ["Django", "django"]
+      },
+
+      "version_granularity": "minor",
+
+      "sources": {
+        "changelog": {
+          "url": "https://docs.djangoproject.com/en/stable/releases/",
+          "notes": "Release notes index; per-release pages carry the backwards-incompatible changes."
+        },
+        "eol": {
+          "url": "https://www.djangoproject.com/download/",
+          "notes": "Supported-versions table plus an unsupported-versions list with end-of-life dates."
+        }
+      }
+    },
+
+    {
+      "id": "nodejs",
+      "display_name": "Node.js",
+      "ecosystem": "node",
+      "_why": "Fixed LTS calendar makes EOL verdicts unambiguous and easy to defend on stage.",
+
+      "match": {
+        "apt": ["nodejs"],
+        "rpm": ["nodejs"],
+        "pypi": []
+      },
+
+      "version_granularity": "major",
+      "_version_granularity_note": "Node support is tracked per major line (18.x, 20.x, 22.x).",
+
+      "sources": {
+        "changelog": {
+          "url": "https://nodejs.org/en/blog/release",
+          "notes": "Blog-style release feed - structurally unlike the table-driven sources."
+        },
+        "eol": {
+          "url": "https://nodejs.org/en/about/previous-releases",
+          "notes": "Official release schedule table with end-of-life dates per major line."
+        }
+      }
+    },
+
+    {
+      "id": "openssl",
+      "display_name": "OpenSSL",
+      "ecosystem": "system",
+      "_why": "The highest-stakes package here - an unsupported OpenSSL is a real security exposure, which is the impact story.",
+
+      "match": {
+        "apt": ["openssl", "libssl1.1", "libssl3"],
+        "rpm": ["openssl", "openssl-libs"],
+        "pypi": []
+      },
+
+      "version_granularity": "minor",
+
+      "sources": {
+        "changelog": {
+          "url": "https://openssl-library.org/news/changelog/",
+          "notes": "Dense plain-text changelog - the hardest extraction target in the set."
+        },
+        "eol": {
+          "url": "https://endoflife.date/openssl",
+          "notes": "Third-party aggregator; used where no single official EOL table exists."
+        }
+      }
+    },
+
+    {
+      "id": "express",
+      "display_name": "Express",
+      "ecosystem": "node",
+      "_why": "npm breadth. Carries a changelog signal only - no formal EOL calendar exists, which is itself a realistic case the pipeline must tolerate.",
+
+      "match": {
+        "apt": [],
+        "rpm": [],
+        "npm": ["express"]
+      },
+
+      "version_granularity": "major",
+
+      "sources": {
+        "changelog": {
+          "url": "https://github.com/expressjs/express/releases",
+          "notes": "GitHub releases page - a fourth distinct page structure."
+        },
+        "eol": null
+      }
+    }
+  ]
+}
