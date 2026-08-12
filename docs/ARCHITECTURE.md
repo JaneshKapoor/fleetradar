@@ -188,6 +188,17 @@ Tracked here as they come up, resolved as stages land.
 - **Express EOL.** No formal end-of-support calendar exists, so `express` carries
   a changelog signal only. The pipeline must tolerate a `null` EOL source rather
   than assume every package has one. *Resolve in Stage 3.*
+- **OpenSSL changed its versioning scheme at 3.0, and one granularity cannot
+  express both.** Pre-3.0 releases are `MAJOR.MINOR.FIX` plus a letter
+  (`1.1.1f`), where the support line is the *three*-component `1.1.1`. From 3.0
+  the scheme is ordinary `MAJOR.MINOR.PATCH`, where the line is the
+  *two*-component `3.0`. Declaring `minor` truncates `1.1.1f` to `1.1`, which
+  matches no line endoflife.date publishes. This matters because `1.1.1f` is the
+  stock OpenSSL on Ubuntu 20.04 and is very likely to appear in the demo fleet.
+  Adding a `patch` granularity does not fix it — that would break 3.x instead.
+  The likely answer is to match an installed version against the version strings
+  Collector B actually returned, by longest prefix, rather than truncating to a
+  fixed depth. *Resolve in Stage 6.*
 - **Which versions to track.** The watchlist pins three release lines per
   package. For breaking-change detection to be useful, the tracked set has to
   cover the releases *newer than* what the fleet actually runs, so this may need
